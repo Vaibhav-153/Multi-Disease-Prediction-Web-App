@@ -3,48 +3,52 @@ import pytest
 from src.prediction import parse_numeric_inputs, predict_class
 
 
-class DummyModel:
-    def __init__(self, prediction):
-        self.prediction = prediction
-        self.last_input = None
+class FakeModel:
+    n_features_in_ = 2
+
+    def __init__(self, result):
+        self.result = result
 
     def predict(self, values):
-        self.last_input = values
-        return [self.prediction]
+        assert values == [[1.0, 2.0]]
+        return self.result
 
 
-def test_parse_numeric_inputs_converts_values():
-    assert parse_numeric_inputs(["1", "2.5", "-3"], 3) == [1.0, 2.5, -3.0]
+def test_parse_numeric_inputs() -> None:
+    assert parse_numeric_inputs(["1", "2.5"], 2) == [1.0, 2.5]
 
 
-def test_parse_numeric_inputs_rejects_missing_value():
+@pytest.mark.parametrize("value", ["", "   "])
+def test_parse_numeric_inputs_rejects_blank(value: str) -> None:
     with pytest.raises(ValueError, match="required"):
-        parse_numeric_inputs(["1", ""], 2)
+        parse_numeric_inputs([value], 1)
 
 
-def test_parse_numeric_inputs_rejects_non_numeric_value():
+def test_parse_numeric_inputs_rejects_non_numeric() -> None:
     with pytest.raises(ValueError, match="numeric"):
-        parse_numeric_inputs(["1", "abc"], 2)
+        parse_numeric_inputs(["abc"], 1)
 
 
-def test_parse_numeric_inputs_rejects_non_finite_value():
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_parse_numeric_inputs_rejects_non_finite(value: str) -> None:
     with pytest.raises(ValueError, match="finite"):
-        parse_numeric_inputs(["nan"], 1)
+        parse_numeric_inputs([value], 1)
 
 
-def test_parse_numeric_inputs_validates_feature_count():
+def test_parse_numeric_inputs_rejects_wrong_count() -> None:
     with pytest.raises(ValueError, match="Expected 2 values"):
         parse_numeric_inputs(["1"], 2)
 
 
-def test_predict_class_calls_model_with_2d_input():
-    model = DummyModel(1)
-    result = predict_class(model, [1.0, 2.0])
-
-    assert result == 1
-    assert model.last_input == [[1.0, 2.0]]
+def test_predict_class_returns_binary_value() -> None:
+    assert predict_class(FakeModel([1]), [1.0, 2.0]) == 1
 
 
-def test_predict_class_rejects_non_binary_result():
+def test_predict_class_checks_model_feature_count() -> None:
+    with pytest.raises(ValueError, match="expects 2 features"):
+        predict_class(FakeModel([1]), [1.0])
+
+
+def test_predict_class_rejects_non_binary_result() -> None:
     with pytest.raises(ValueError, match="binary class"):
-        predict_class(DummyModel(2), [1.0])
+        predict_class(FakeModel([2]), [1.0, 2.0])

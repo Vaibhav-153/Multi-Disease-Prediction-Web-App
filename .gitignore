@@ -9,6 +9,9 @@ __pycache__/
 venv/
 env/
 
+# Jupyter
+.ipynb_checkpoints/
+
 # Environment / secrets
 .env
 .env.*
@@ -19,7 +22,3 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
-
-# Generated reports
-reports/*.json
-!reports/.gitkeep

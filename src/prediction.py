@@ -33,6 +33,12 @@ def parse_numeric_inputs(values: Sequence[str], expected_count: int) -> list[flo
 
 def predict_class(model: Any, values: Sequence[float]) -> int:
     """Run one binary classification prediction and normalize the result."""
+    expected_features = getattr(model, "n_features_in_", None)
+    if expected_features is not None and len(values) != int(expected_features):
+        raise ValueError(
+            f"Model expects {int(expected_features)} features, received {len(values)}."
+        )
+
     result = model.predict([list(values)])
     if len(result) != 1:
         raise ValueError("Model returned an unexpected number of predictions.")

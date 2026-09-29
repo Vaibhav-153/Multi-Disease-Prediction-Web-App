@@ -1,1 +1,1 @@
-"""Training utilities for the project."""
+"""Training and project-maintenance scripts."""
